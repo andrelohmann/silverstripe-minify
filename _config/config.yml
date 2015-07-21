@@ -1,0 +1,5 @@
+name: minify
+---
+Controller:
+  extensions:
+    - SS_MinifiedResponseExtension
