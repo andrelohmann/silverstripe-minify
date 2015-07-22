@@ -14,7 +14,7 @@ To write cached processing to memcached, you can add the following to your _ss_e
 ```
 // Minify Caching Backend
 define('MINIFY_CACHE_BACKEND', serialize(array(
-    "Type" => "Memcached",
+    "Type" => "Libmemcached",
     "Options" => array(
         "servers" => array(
             'host' => 'localhost', 
