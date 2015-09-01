@@ -17,7 +17,7 @@ class Minify_Requirements_Backend extends Requirements_Backend {
 		$newJavascript = array();
 		$combinedJs = array();
 		foreach($this->javascript as $js => $bool){
-			if(strstr($js, '://') > -1) $newJavascript[$js] = $bool;
+			if(strstr($js, '://') > -1 || (strstr($js, '//') == 0)) $newJavascript[$js] = $bool;
 			else $combinedJs[] = $js;
 		}
 		$this->javascript = $newJavascript;
@@ -25,7 +25,7 @@ class Minify_Requirements_Backend extends Requirements_Backend {
 		$newCss = array();
 		$combinedCss = array();
 		foreach($this->css as $css => $media){
-			if(strstr($css, '://') > -1){
+			if(strstr($css, '://') > -1 || (strstr($css, '//') == 0)){
 				$newCss[$css] = $media;
 			}else{
 				$media = $media['media']?$media['media']:'NULL';

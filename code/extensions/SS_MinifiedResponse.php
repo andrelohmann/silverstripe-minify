@@ -112,8 +112,7 @@ class SS_MinifiedResponse extends SS_HTTPResponse {
 			,array_values($this->arrPlaceHolders)
 			,$this->body
 		);
-
-
+		
 		return $this->body;
 	}
 
