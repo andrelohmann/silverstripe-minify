@@ -13,6 +13,8 @@ Silverstripe 3.2.x
 
 minify html and process javascript and css files
 
+only activates on Live Environments
+
 To write cached processing to memcached, you can add the following to your _ss_environment.php
 
 ```
