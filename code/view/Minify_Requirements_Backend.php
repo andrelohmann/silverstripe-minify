@@ -7,6 +7,31 @@
 class Minify_Requirements_Backend extends Requirements_Backend {
 
 	/**
+	 * Whether to add the minified and combined css inline or as link tag
+	 * 
+	 * @var bool
+	 */
+	protected $inline_css = true;
+
+	/**
+	 * Enable or disable inline css
+	 * 
+	 * @param $enable
+	 */
+	public function set_inline_css($enable) {
+		$this->inline_css = (bool) $enable;
+	}
+
+	/**
+	 * Check whether inline css is enabled.
+	 * 
+	 * @return bool
+	 */
+	public function get_inline_css() {
+		return $this->inline_css;
+	}
+
+	/**
 	 * Do the heavy lifting involved in combining (and, in the case of JavaScript minifying) the
 	 * combined files.
 	 */
@@ -16,16 +41,16 @@ class Minify_Requirements_Backend extends Requirements_Backend {
 		
 		$newJavascript = array();
 		$combinedJs = array();
-		foreach($this->javascript as $js => $bool){
-			if(strstr($js, '://') > -1 || (strstr($js, '//') == 0)) $newJavascript[$js] = $bool;
+		foreach(array_diff_key($this->javascript,$this->blocked) as $js => $bool){
+			if(strpos($js, '://') !== false || (strpos($js, '//') === 0)) $newJavascript[$js] = $bool;
 			else $combinedJs[] = $js;
 		}
 		$this->javascript = $newJavascript;
 
 		$newCss = array();
 		$combinedCss = array();
-		foreach($this->css as $css => $media){
-			if(strstr($css, '://') > -1 || (strstr($css, '//') == 0)){
+		foreach(array_diff_key($this->css,$this->blocked) as $css => $media){
+			if(strpos($css, '://') !== false || (strpos($css, '//') === 0)){
 				$newCss[$css] = $media;
 			}else{
 				$media = $media['media']?$media['media']:'NULL';
@@ -73,7 +98,7 @@ class Minify_Requirements_Backend extends Requirements_Backend {
 				'customHeadTags' => $this->customHeadTags,
 				'disabled' => $this->disabled,
 				'blocked' => $this->blocked,
-				'combine_filed' => $this->combine_files
+				'combine_files' => $this->combine_files
 			)));
 
 			$cache = SS_Cache::factory('MINIFY_CACHE');
@@ -97,25 +122,38 @@ class Minify_Requirements_Backend extends Requirements_Backend {
 				}
 
 				// Add all inline JavaScript *after* including external files they might rely on
-				if($this->customScript) {
+				if(is_array($this->customScript) && count($this->customScript) > 0) {
+					
+                                        $jsRequirements .= "<script type=\"text/javascript\">\n//<![CDATA[\n";
+                                                
 					foreach(array_diff_key($this->customScript,$this->blocked) as $script) {
-						$jsRequirements .= "<script type=\"text/javascript\">\n//<![CDATA[\n";
-						$jsRequirements .= "$script\n";
-						$jsRequirements .= "\n//]]>\n</script>\n";
+                                            $jsRequirements .= "$script\n";
 					}
+                                        
+					$jsRequirements .= "\n//]]>\n</script>\n";
 				}
 
 				foreach(array_diff_key($this->css,$this->blocked) as $file => $params) {
 					$path = Convert::raw2xml($this->path_for_file($file));
-					if($path) {
-						$media = (isset($params['media']) && !empty($params['media']))
-							? " media=\"{$params['media']}\"" : "";
-						$requirements .= "<link rel=\"stylesheet\" type=\"text/css\"{$media} href=\"$path\" />\n";
-					}
+					if($path){
+                                            $media = (isset($params['media']) && !empty($params['media']))?" media=\"{$params['media']}\"" : "";
+                                            if(!$this->get_inline_css() || preg_match('{^//|http[s]?}', $path)){
+                                                $requirements .= "<link rel=\"stylesheet\" type=\"text/css\"{$media} href=\"$path\" />\n";
+                                            }else{
+                                                // put css inline
+                                                $requirements .= "<style type=\"text/css\"{$media}>\n";
+                                                $requirements .= file_get_contents(preg_replace('/\?.*/', '', Director::baseFolder() . '/' . $file))."\n";
+                                                $requirements .= "</style>\n";
+                                            }
+                                        }
 				}
-
-				foreach(array_diff_key($this->customCSS, $this->blocked) as $css) {
-					$requirements .= "<style type=\"text/css\">\n$css\n</style>\n";
+                                
+                                if(is_array($this->customCSS) && count($this->customCSS) > 0) {
+                                    $requirements .= "<style type=\"text/css\">\n";
+                                    foreach(array_diff_key($this->customCSS, $this->blocked) as $css) {
+					$requirements .= $css."\n";
+                                    }
+                                    $requirements .= "</style>\n";
 				}
 
 				foreach(array_diff_key($this->customHeadTags,$this->blocked) as $customHeadTag) {
