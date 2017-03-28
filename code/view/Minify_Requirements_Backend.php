@@ -182,7 +182,8 @@ class Minify_Requirements_Backend extends Requirements_Backend {
 				$content = preg_replace("/(<\/body[^>]*>)/i", $jsRequirements . "\\1", $content);
 
 				// Put CSS at the bottom of the head
-				$content = preg_replace("/(<\/head>)/i", $requirements . "\\1", $content);
+				$content = preg_replace("/(<\/head>)/i", "{{INLINECSS}}\\1", $content);
+				$content = str_replace("{{INLINECSS}}", $requirements, $content);
 			} elseif($this->write_js_to_body) {
 
 				// If your template already has script tags in the body, then we try to put our script
@@ -207,10 +208,12 @@ class Minify_Requirements_Backend extends Requirements_Backend {
 				}
 
 				// Put CSS at the bottom of the head
-				$content = preg_replace("/(<\/head>)/i", $requirements . "\\1", $content);
+				$content = preg_replace("/(<\/head>)/i", "{{INLINECSS}}\\1", $content);
+				$content = str_replace("{{INLINECSS}}", $requirements, $content);
 			} else {
-				$content = preg_replace("/(<\/head>)/i", $requirements . "\\1", $content);
+				$content = preg_replace("/(<\/head>)/i", "{{INLINECSS}}\\1", $content);
 				$content = preg_replace("/(<\/head>)/i", $jsRequirements . "\\1", $content);
+				$content = str_replace("{{INLINECSS}}", $requirements, $content);
 			}
 		}
 
